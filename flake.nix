@@ -8,31 +8,28 @@
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        pyenv = pkgs.python311.withPackages (p: with p; [
-          flask
-        ]);
+        py = {
+          env = pkgs.python311.withPackages (_: py.deps.all);
+          pkgs = pkgs.python311Packages;
+          deps = rec {
+            prod = with py.pkgs; [ flask ];
+            dev = with py.pkgs; [ black isort vulture ];
+            all = prod ++ dev;
+          };
+        };
       in
       {
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            black
-          ] ++ [ pyenv ];
+          packages = [ py.env pkgs.pyright ];
         };
 
-        packages = rec {
-          wikipath =
-            let
-              pypkgs = pkgs.python311Packages;
-            in
-            pypkgs.buildPythonPackage {
-              pname = "onelink";
-              version = "0.0.1";
-              src = ./.;
+        formatter = pkgs.nixpkgs-fmt;
+        packages.default = py.pkgs.buildPythonPackage {
+          pname = "onelink";
+          version = "0.0.1";
+          src = ./.;
 
-              propagatedBuildInputs = with pypkgs; [ flask ];
-            };
-
-          default = wikipath;
+          propagatedBuildInputs = py.deps.prod;
         };
       });
 }
