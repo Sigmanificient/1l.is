@@ -12,7 +12,7 @@
           env = pkgs.python311.withPackages (_: py.deps.all);
           pkgs = pkgs.python311Packages;
           deps = rec {
-            prod = with py.pkgs; [ flask ];
+            prod = with py.pkgs; [ quart ];
             dev = with py.pkgs; [ black isort vulture ];
             all = prod ++ dev;
           };
