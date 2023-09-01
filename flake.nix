@@ -19,7 +19,7 @@
           pkgs = pkgs.python311Packages;
           deps = rec {
             prod = with py.pkgs; [ quart quart-db ];
-            dev = with py.pkgs; [ black isort vulture ];
+            dev = with py.pkgs; [ black isort vulture pytest ];
             all = prod ++ dev;
           };
         };
