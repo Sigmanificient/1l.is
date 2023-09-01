@@ -8,11 +8,17 @@
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        quart-db = (import ./quart-db.nix {
+          inherit pkgs;
+          pypkgs = py.pkgs;
+        });
+
         py = {
           env = pkgs.python311.withPackages (_: py.deps.all);
           pkgs = pkgs.python311Packages;
           deps = rec {
-            prod = with py.pkgs; [ quart ];
+            prod = with py.pkgs; [ quart quart-db ];
             dev = with py.pkgs; [ black isort vulture ];
             all = prod ++ dev;
           };
@@ -27,8 +33,9 @@
         packages.default = py.pkgs.buildPythonPackage {
           pname = "onelink";
           version = "0.0.1";
-          src = ./.;
+          format = "pyproject";
 
+          src = ./.;
           propagatedBuildInputs = py.deps.prod;
         };
       });
