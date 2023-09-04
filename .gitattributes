@@ -1,2 +1,5 @@
 * text=lf
 * eol=lf
+
+*.sql linguist-detectable=true
+*.sql linguist-language=sql
