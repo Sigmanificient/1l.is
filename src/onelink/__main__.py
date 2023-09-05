@@ -1,6 +1,6 @@
 from quart import Quart, render_template
 
-from .base36 import base36_decode, base36_encode
+from .base36 import base36_decode, base36_encode, base36_valid
 from .database import get_db
 
 QUERY_REDIRECT = "SELECT redirect FROM link WHERE id = ?"
@@ -45,6 +45,8 @@ async def create(url: str):
 
 @app.route("/<path:path>")
 async def resolve_url(path: str):
+    if not base36_valid(path):
+        return f"Invalid url: {path}"
     url_id = base36_decode(path.lower())
     print(url_id)
 

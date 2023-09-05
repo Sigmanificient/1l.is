@@ -20,6 +20,10 @@ def base36_decode(input: str) -> int:
     return int(input.lower(), 36)
 
 
+def base36_valid(input: str) -> bool:
+    return all(char in BASE for char in input)
+
+
 def test_encode_decode_4_chars():
     for letters in combinations(BASE, r=4):
         word = ''.join(letters)
