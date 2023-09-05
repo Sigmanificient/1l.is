@@ -20,8 +20,6 @@ def _singleton(gfunc):
 
     return wrapped
 
-
-
 @asynccontextmanager
 @_singleton
 async def get_db(app: Quart) -> AsyncGenerator[aiosqlite.Connection, None]:
@@ -33,3 +31,11 @@ async def get_db(app: Quart) -> AsyncGenerator[aiosqlite.Connection, None]:
     db = await aiosqlite.connect(app.config["DATABASE"])
     yield db
     await db.close()
+
+
+
+async def fetch_single_item(db, query, *params, default):
+    cursor = await db.execute(query, params)
+    row = await cursor.fetchone()
+
+    return row[0] if row else default
