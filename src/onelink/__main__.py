@@ -1,4 +1,4 @@
-from quart import Quart
+from quart import Quart, render_template
 
 from .base36 import base36_decode, base36_encode
 from .database import get_db
@@ -13,8 +13,13 @@ app = Quart(__name__)
 app.config.update(DATABASE=app.root_path / ".." / ".." / ".db")
 
 
+@app.route("/")
+async def home():
+    return await render_template("index.jinja2")
+
+
 @app.route("/create/<path:url>")
-async def home(url: str):
+async def create(url: str):
     async with get_db(app) as db:
         res = tuple(await db.execute_fetchall(QUERY_CHECK_ID, (url,)))
         print(f"{res=!r}")
