@@ -1,19 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Home</title>
-  </head>
-  <body>
-    <h1>1l.is</h1>
-    <p>1l.is is a simple URL shortener.</p>
-    <form action="/create" method="post">
-      <input
-        id="url"
-        type="text"
-        name="url"
-        placeholder="Enter the url to shorten"
-      >
-      <input type="submit" value="Submit">
-  </body>
-</html>
+{% extends "base.jinja2" %}
+
+{% block title %}Home{% endblock %}
+{% block content %}
+  <h1>1l.is</h1>
+  <p>1l.is is a simple URL shortener.</p>
+  <form action="/create" method="post">
+    <input
+      id="url"
+      type="text"
+      name="url"
+      placeholder="Enter the url to shorten"
+    >
+    <input type="submit" value="Submit">
+  </form>
+{% endblock %}
