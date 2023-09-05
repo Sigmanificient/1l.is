@@ -1,4 +1,4 @@
-from quart import Quart, render_template, request
+from quart import Quart, render_template, request, redirect
 import aiosqlite
 
 from .base36 import base36_decode, base36_encode, base36_valid
@@ -15,10 +15,9 @@ app.config.update(DATABASE=app.root_path / ".." / ".." / ".db")
 
 
 async def get_new_id(db: aiosqlite.Connection):
-    last_id = tuple(await db.execute_fetchall(QUERY_LAST_ID, ()))
-    if not last_id:
-        return base36_encode(1)
-    return base36_encode(last_id[0][0] + 1)
+    row = await (await db.execute(QUERY_LAST_ID)).fetchone()
+    last_id = (row[0] if row else 0)
+    return base36_encode(last_id + 1)
 
 
 @app.route("/")
@@ -30,11 +29,13 @@ async def home():
 async def resolve_url(path: str):
     if not base36_valid(path):
         return f"Invalid url: {path}"
+
     url_id = base36_decode(path.lower())
     async with get_db(app) as db:
-        redirect = tuple(await db.execute_fetchall(QUERY_REDIRECT, (url_id,)))
+        row = await (await db.execute(QUERY_REDIRECT, (url_id,))).fetchone()
+        url = row[0] if row else '/'
 
-    return str(redirect)
+    return redirect(url)
 
 
 @app.route("/create", methods=["POST"])
@@ -45,12 +46,14 @@ async def create():
         return "Invalid url"
 
     async with get_db(app) as db:
-        res = tuple(await db.execute_fetchall(QUERY_CHECK_ID, (url,)))
+        res = await (await db.execute(QUERY_CHECK_ID, (url,))).fetchone()
+
         if res:
-            return f"This url already exists: /{res[0][0]}"
+            return f"This url already exists: /{res[0]}"
+
         name = await get_new_id(db)
-        await db.execute(QUERY_INSERT_LINK, (name, url))
-        await db.commit()
+        await db.execute_insert(QUERY_INSERT_LINK, (name, url))
+
     return f"Shorted url for {url}: /{name}"
 
 
