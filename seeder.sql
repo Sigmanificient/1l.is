@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS link
 (
     id INTEGER PRIMARY KEY,
-    name VARCHAR(8) NOT NULL,
     redirect VARCHAR(1024) NOT NULL
 );
 

@@ -1,23 +1,16 @@
 from quart import Quart, render_template, request, redirect
-import aiosqlite
 
 from .base36 import base36_decode, base36_encode, base36_valid
 from .database import fetch_single_item, get_db
 
 QUERY_REDIRECT = "SELECT redirect FROM link WHERE id = ?"
-QUERY_CHECK_ID = "SELECT name FROM link WHERE redirect = ?"
-QUERY_INSERT_LINK = "INSERT INTO link(name, redirect) VALUES(?, ?)"
+QUERY_CHECK_ID = "SELECT id FROM link WHERE redirect = ?"
+QUERY_INSERT_LINK = "INSERT INTO link(redirect) VALUES(?)"
 QUERY_LAST_ID = "SELECT IFNULL(id, 1) FROM link ORDER BY id desc LIMIT 1"
 
 
 app = Quart(__name__)
 app.config.update(DATABASE=app.root_path / ".." / ".." / ".db")
-
-
-async def get_new_id(db: aiosqlite.Connection):
-    last_id = await fetch_single_item(db, QUERY_LAST_ID, default=0)
-    return base36_encode(last_id + 1)
-
 
 @app.route("/")
 async def home():
@@ -33,6 +26,9 @@ async def resolve_url(path: str):
     async with get_db(app) as db:
         url = await fetch_single_item(db, QUERY_REDIRECT, url_id, default='/')
 
+    if not url.startswith("https://"):
+        url = "https://" + url
+
     return redirect(url)
 
 
@@ -40,6 +36,7 @@ async def resolve_url(path: str):
 async def create():
     form = await request.form
     url = form.get("url")
+
     if url is None:
         return "Invalid url"
 
@@ -47,12 +44,14 @@ async def create():
         res = await fetch_single_item(db, QUERY_CHECK_ID, url, default=None)
 
         if res is not None:
-            return f"This url already exists: /{res}"
+            return f"This url already exists: /{base36_encode(res)}"
 
-        name = await get_new_id(db)
-        await db.execute_insert(QUERY_INSERT_LINK, (name, url))
+        res = await db.execute_insert(QUERY_INSERT_LINK, (url,))
+        assert res is not None
 
-    return f"Shorted url for {url}: /{name}"
+        rid, = res
+
+    return f"Shorted url for {url}: /{base36_encode(rid)}"
 
 
 def main():
