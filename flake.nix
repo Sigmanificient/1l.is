@@ -41,6 +41,8 @@
             lib = nixpkgs.lib;
             cfg = config.services.onelink;
             sock = "/run/onelink/onelink.sock";
+            domain_name = "1l.is";
+            acme_email = "clement2104.boillot@gmail.com";
           in
           {
             options.services.onelink = {
@@ -48,6 +50,23 @@
             };
 
             config = lib.mkIf cfg.enable {
+              security.acme = {
+                acceptTerms = true;
+                defaults.email = acme_email;
+              };
+
+              services.nginx = {
+                enable = true;
+                virtualHosts.${domain_name} = {
+                  enableACME = true;
+                  forceSSL = true;
+                  locations."\\".extraConfig = ''
+                    include proxy_params;
+                    proxy_pass http://unix:${sock};
+                  '';
+                };
+              };
+
               systemd.services.onelink = {
                 wantedBy = [ "multi-user.target" ];
                 serviceConfig = {
