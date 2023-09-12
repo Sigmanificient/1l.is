@@ -14,29 +14,52 @@
           pypkgs = py.pkgs;
         });
 
-        py = {
-          env = pkgs.python311.withPackages (_: py.deps.all);
-          pkgs = pkgs.python311Packages;
-          deps = rec {
-            prod = with py.pkgs; [ quart quart-db ];
-            dev = with py.pkgs; [ black isort vulture pytest ];
-            all = prod ++ dev;
-          };
-        };
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          packages = [ py.env pkgs.pyright ];
-        };
-
-        formatter = pkgs.nixpkgs-fmt;
-        packages.default = py.pkgs.buildPythonPackage {
+        onelink = py.pkgs.buildPythonPackage {
           pname = "onelink";
           version = "0.0.1";
           format = "pyproject";
 
           src = ./.;
-          propagatedBuildInputs = py.deps.prod;
+          propagatedBuildInputs = py.deps.web;
         };
+
+        py = {
+          env = pkgs.python311.withPackages (_: py.deps.all);
+          pkgs = pkgs.python311Packages;
+          deps = rec {
+            web = with py.pkgs; [ quart quart-db ];
+            dev = with py.pkgs; [ black isort vulture pytest ];
+            all = web ++ dev ++ [ onelink ];
+          };
+        };
+
+      in
+      {
+        nixosModules.default = { config, ... }:
+          let
+            lib = nixpkgs.lib;
+            cfg = config.services.onelink;
+          in
+          {
+            options.services.onelink = {
+              enable = lib.mkEnableOption "onelink";
+            };
+
+            config = lib.mkIf cfg.enable {
+              systemd.services.onelink = {
+                wantedBy = [ "multi-user.target" ];
+                serviceConfig = {
+                  ExecStart = "${py.env}/bin/onelink";
+                };
+              };
+            };
+          };
+
+        devShells.default = pkgs.mkShell {
+          packages = [ py.env pkgs.pyright ];
+        };
+
+        formatter = pkgs.nixpkgs-fmt;
+        packages.default = onelink;
       });
 }
