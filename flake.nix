@@ -41,38 +41,39 @@
             lib = nixpkgs.lib;
             cfg = config.services.onelink;
             sock = "/run/onelink/onelink.sock";
-            domain = "1l.is";
-            acme_email = "clement2104.boillot@gmail.com";
           in
           {
             options.services.onelink = {
               enable = lib.mkEnableOption "onelink";
+              domain = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+              };
+              acmeEmail = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+              };
+              acmeAcceptTerms = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+              };
             };
 
             config = lib.mkIf cfg.enable {
               security.acme = {
-                acceptTerms = true;
-                defaults.email = acme_email;
+                acceptTerms = cfg.acmeAcceptTerms;
+                defaults.email = cfg.acmeEmail;
               };
-
-              networking.firewall = {
-                enable = true;
-                allowedTCPPorts = [ 80 443 ];
-              };
-
               services.nginx = {
                 enable = true;
-                virtualHosts.${domain} = {
+                virtualHosts.${cfg.domain} = {
                   enableACME = true;
-                  forceSSL = true;
+                  addSSL = true;
                   locations = {
-                    "/".extraConfig = ''
-                      include proxy_params;
-                      proxy_pass http://unix:${sock};
-                    '';
-                    "/.well-known/acme-challenge".extraConfig = ''
-                      root /var/www/demo
-                    '';
+                    "/" = {
+                      proxyPass = "http://unix:${sock}";
+                      recommendedProxySettings = true;
+                    };
                   };
                 };
               };
