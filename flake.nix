@@ -40,7 +40,7 @@
           let
             lib = nixpkgs.lib;
             cfg = config.services.onelink;
-            sock = /var/run/onelink.sock;
+            sock = "/run/onelink/onelink.sock";
           in
           {
             options.services.onelink = {
@@ -54,6 +54,7 @@
                   ExecStart = "${py.env}/bin/hypercorn onelink.__main__:app
                   --bind unix:${sock}";
                   WorkingDirectory = ./.;
+                  RuntimeDirectory = "onelink";
                 };
               };
             };
