@@ -41,7 +41,7 @@
             lib = nixpkgs.lib;
             cfg = config.services.onelink;
             sock = "/run/onelink/onelink.sock";
-            domain_name = "1l.is";
+            domain = "1l.is";
             acme_email = "clement2104.boillot@gmail.com";
           in
           {
@@ -55,15 +55,25 @@
                 defaults.email = acme_email;
               };
 
+              networking.firewall = {
+                enable = true;
+                allowedTCPPorts = [ 80 443 ];
+              };
+
               services.nginx = {
                 enable = true;
-                virtualHosts.${domain_name} = {
+                virtualHosts.${domain} = {
                   enableACME = true;
                   forceSSL = true;
-                  locations."\\".extraConfig = ''
-                    include proxy_params;
-                    proxy_pass http://unix:${sock};
-                  '';
+                  locations = {
+                    "/".extraConfig = ''
+                      include proxy_params;
+                      proxy_pass http://unix:${sock};
+                    '';
+                    "/.well-known/acme-challenge".extraConfig = ''
+                      root /var/www/demo
+                    '';
+                  };
                 };
               };
 
