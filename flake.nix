@@ -29,7 +29,8 @@
           deps = rec {
             web = with py.pkgs; [ quart quart-db ];
             dev = with py.pkgs; [ black isort vulture pytest ];
-            all = web ++ dev ++ [ onelink ];
+            prod = with py.pkgs; [ hypercorn ];
+            all = web ++ dev ++ prod ++ [ onelink ];
           };
         };
 
@@ -39,6 +40,7 @@
           let
             lib = nixpkgs.lib;
             cfg = config.services.onelink;
+            sock = /var/run/onelink.sock;
           in
           {
             options.services.onelink = {
@@ -49,7 +51,9 @@
               systemd.services.onelink = {
                 wantedBy = [ "multi-user.target" ];
                 serviceConfig = {
-                  ExecStart = "${py.env}/bin/onelink";
+                  ExecStart = "${py.env}/bin/hypercorn onelink.__main__:app
+                  --bind unix:${sock}";
+                  WorkingDirectory = ./.;
                 };
               };
             };
