@@ -31,7 +31,8 @@ If you are on NixOS, you can just use this repo as an input in your NixOS
 flake.nix.
 
 Onelink exports a NixOS module, with a service that enables ACME, the Nginx
-server block and the service:
+server block, the service, and will open the ports in the firewall (for this
+last one to work, don't forget to open it with `networking.firewall.enable`):
 ```nix
 {
   inputs = {

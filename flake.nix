@@ -66,6 +66,9 @@
                 acceptTerms = cfg.acmeAcceptTerms;
                 defaults.email = cfg.acmeEmail;
               };
+
+              networking.firewall.allowedTCPPorts = [ 80 443 ];
+
               services.nginx = {
                 enable = true;
                 virtualHosts.${cfg.domain} = {
