@@ -83,7 +83,8 @@
               systemd.services.onelink = {
                 wantedBy = [ "multi-user.target" ];
                 serviceConfig = {
-                  ExecStart = "${py.env}/bin/hypercorn src.onelink.__main__:app --bind unix:${sock} --user 666";
+                  User="nginx";
+                  ExecStart = "${py.env}/bin/hypercorn src.onelink.__main__:app --bind unix:${sock}";
                   WorkingDirectory = ./.;
                   RuntimeDirectory = "onelink";
                 };
