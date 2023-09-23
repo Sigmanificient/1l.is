@@ -14,14 +14,15 @@
           pypkgs = py.pkgs;
         });
 
-        onelink = py.pkgs.buildPythonPackage {
+        onelink = py.pkgs.buildPythonApplication {
           pname = "onelink";
           version = "0.0.1";
-          format = "pyproject";
+          format = "setuptools";
 
           src = ./.;
-          propagatedBuildInputs = py.deps.web;
-        };
+          propagatedBuildInputs = py.deps.web ++ py.deps.build;
+          doCheck = false;
+       };
 
         py = {
           env = pkgs.python311.withPackages (_: py.deps.all);
@@ -30,6 +31,7 @@
             web = with py.pkgs; [ quart quart-db ];
             dev = with py.pkgs; [ black isort vulture pytest ];
             prod = with py.pkgs; [ hypercorn ];
+            build = with py.pkgs; [ setuptools wheel ];
             all = web ++ dev ++ prod ++ [ onelink ];
           };
         };
